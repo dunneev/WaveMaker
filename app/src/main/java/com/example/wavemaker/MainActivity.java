@@ -1,30 +1,43 @@
 package com.example.wavemaker;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
-import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+import android.view.MotionEvent;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
     }
 
+    // These methods are defined in jni-bridge.cpp,
+    // and need to be declared here in order to use them.
+    private native void touchEvent(int action);
+
+    private native void startEngine();
+
+    private native void stopEngine();
+
+    // Call the JNI bridge to start the audio engine.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // Example of a call to a native method
-        TextView tv = findViewById(R.id.sample_text);
-        tv.setText(stringFromJNI());
+        startEngine();
     }
 
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-    public native String stringFromJNI();
+    // Override onTouchEvent to receive all touch events for our activity and pass them
+    // directly to the JNI bridge to switch the tone on and off.
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        touchEvent(event.getAction());
+        return super.onTouchEvent(event);
+    }
+
+    // Call the JNI bridge to stop the audio engine.
+    @Override
+    public void onDestroy() {
+        stopEngine();
+        super.onDestroy();
+    }
 }
